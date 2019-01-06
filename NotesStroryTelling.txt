@@ -1,0 +1,74 @@
+AB Testing
+
+https://classroom.udacity.com/courses/ud257/lessons/4018018619/concepts/40043986740923
+
+
+
+Options for Speedus
+
+Pandas Documentatiion: http://pandas.pydata.org/pandas-docs/stable/enhancingperf.html
+
+Cython, 
+Numba 
+pandas.eval().
+
+converting code to cython
+We get another huge improvement simply by providing type information:
+using np functions instead of python builtin function
+
+
+*** Warning You can not pass a Series directly as a ndarray typed parameter to a Cython function. Instead pass the actual ndarray using the .values attribute of the Series. The reason is that the Cython definition is specific to an ndarray and not the passed Series.
+So, do not do this:
+
+apply_integrate_f(df['a'], df['b'], df['N'])
+But rather, use .values to get the underlying ndarray:
+
+apply_integrate_f(df['a'].values, df['b'].values, df['N'].values)
+Note Loops like this would be extremely slow in Python, but in Cython looping over NumPy arrays is fast.
+
+
+
+
+
+Transform:
+
+
+WOMP: zscore 
+DASK: : 8min 40s
+panda : 8min 48s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+
+==============================================================
+AS: I am so annoyed with the documentation on the topic of transform and filter.
+They present trivial examples that in no way scale.. and offer no further directions
+on how to redesign code for real-world examples! - 
+==============================================================
+DASK: computing zscore for each group  seems like a job that could run in parallel
+
+how to do set this up in DASK ?
+
+
+Computing one group at a time is likely to be slow. Instead I recommend using groupby-apply
+
+df.groupby([...]).apply(func)
+Like Pandas, the user-defined function func should expect a Pandas dataframe that has all rows corresponding to that group, and should return either a Pandas dataframe, a Pandas Series, or scalar.
+
+=== Example of giving Dask a pd dataframe ====
+import dask.dataframe as dd
+import pandas as pd
+pdf = pd.DataFrame({'A':[1, 2, 3, 4, 5], 'B':['1','1','a','a','a']})
+ddf = dd.from_pandas(pdf, npartitions = 3)
+groups = ddf.groupby('B')
+
+for group in pdf['B'].unique():
+    print groups.get_group(group)
+    
+===========
+Getting one group at a time can be cheap if your data is indexed by the grouping column
+
+df = df.set_index('date')
+part = df.loc['2018-05-01'].compute()
+
+
+Interating in Dask
+# iterating is slow over dask ...
+
